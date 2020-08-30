@@ -7,6 +7,10 @@ import { Button } from '@material-ui/core'
 export default class Test extends React.Component {
   constructor(props) {
     super(props);
+
+    this.charstats = {};
+
+
     this.state = ({
       all: [],
       word: [],
@@ -98,58 +102,38 @@ export default class Test extends React.Component {
     }
   }
 
-  // change = (e) => {
-  //   if(this.state.prev == 0) {
-  //     var time = new Date();
-  //     var t1 = time.getTime();
-  //     this.setState({
-  //       prev: t1
-  //     })
-  //   }
-
-  //   var text = e.target.value
-  //   this.setState({
-  //     text: e.target.value
-  //   })
-  //   for(var i = 0; i < this.state.word.length; i++) {
-  //     var key = text[i];
-  //     var c = this.state.correct;
-  //     if(text.length-1 < i) {
-  //       c[i] = "black"
-  //     } else if(key == this.state.word[i]) {
-  //       c[i] = "green";
-  //     } else {
-  //       c[i] = "red"
-  //     }
-      
-  //   }
-  //   if(!c.includes("black") && !c.includes("red")) {
-  //     this.newWord(this.state.all)
-  //     this.setState({
-  //       text: '',
-  //       correct: c
-  //     })
-  //   }
-
-  // }
-
 
 
   onKey = (e) => {
     
-    
-    
+    console.log('in key')
     if(e.keyCode != 8 && e.keyCode != 46) {
       var time = new Date();
       var t1 = time.getTime();
       var times = this.state.times;
       if(this.state.prev == 0) {
-        times.push([[]])
+        times.push([])
       } else {
+        console.log(e.key);
+        var cs = this.charstats
         var p = this.state.prev;
-        times[this.state.times.length-1].push(t1-p)
+        if(e.key in cs) {
+          var char = cs[e.key];
+          char.push(t1-p);
+          cs[e.key] = char
+        } else {
+          cs[e.key] = [t1-p]
+        }
+        this.charstats = cs;
+        
+        if(this.state.text.length == 0) {
+          times.push([t1-p]);
+        } else {
+          times[this.state.times.length-1].push(t1-p)
+        }
+        
       }
-
+      console.log(this.charstats)
       this.setState({
         prev: t1
       })
@@ -162,19 +146,27 @@ export default class Test extends React.Component {
           text: t+e.key
         });
       } 
-    }
+    
    
     
-    if(!c.includes("black") && !c.includes("red")) {
-      this.newWord(this.state.all)
-      this.setState({
-        text: '',
-        correct: c
-      })
+      if(!c.includes("black") && !c.includes("red")) {
+        this.newWord(this.state.all)
+        this.setState({
+          text: '',
+          correct: c
+        })
+      }
     }
   }
     
 
+  findMean = (array) => {
+    var sum = 0;
+    for(var i = 0; i < array.length; i++) {
+      sum = sum + array[i];
+    }
+    return (sum / array.length).toFixed(2);
+  }
 
   render() {
     
@@ -187,6 +179,73 @@ export default class Test extends React.Component {
       </p>
       );
     })
+
+    var dict = this.charstats
+    
+  
+    
+
+    function sortJsObject(dict) {
+      
+      var keys = [];
+      for(var key in dict) { 
+         keys[keys.length] = key;
+       }
+  
+       var values = [];     
+       for(var i = 0; i < keys.length; i++) {
+           values[values.length] = dict[keys [i]];
+       }
+  
+       var sortedValues = values.sort(sortNumber);
+       console.log(sortedValues);
+    } 
+  
+    // this is needed to sort values as integers
+    function sortNumber(a,b) {
+      return a - b;
+    }
+
+
+    var characterstats = () => {
+      if(this.state.stats) {
+        var newDict = {}
+        for(var key in dict) {
+          newDict[key] = this.findMean(dict[key]);
+        }
+        newDict = sortJsObject(newDict);
+        Object.keys(newDict).map((key) => {
+          return (
+            <p>{key}: {newDict[key]}</p>
+          )
+        })
+
+      } else {
+        return (
+          <></>
+        )
+      }
+    }
+    // if(this.state.stats) {
+    //   var newDict = {};
+    //   for(var key in dict) {
+    //     var count = 0;
+    //     for(var i = 0; i < dict[key].length; i++) {
+    //       count = count + dict[key][i];
+    //     }
+    //     count = (count / dict[key].length).toFixed(2);
+    //     newDict[key] = count;
+    //   }
+    //   newDict = sortJsObject(newDict);
+    //   console.log(newDict);
+    //   var characterstats = Object.getOwnPropertyNames(newDict).map(function(key) {
+        
+    //     return (
+    //       <p>{key}: {newDict[key]}</p>
+    //     );
+    //   });
+    // }
+    
     return (
         <>
         <Button variant="contained" onClick={this.props.changeDisplay}>Back</Button>
@@ -223,6 +282,10 @@ export default class Test extends React.Component {
               Words per minute:
               {(60 / this.state.avg).toFixed(2)}
             </p>
+            {this.state.stats &&
+            characterstats
+            }
+          
         </div>
         
         
