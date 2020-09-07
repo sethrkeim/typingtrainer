@@ -27,11 +27,28 @@ export default class Test extends React.Component {
       stats: false,
       prevChar: [],
       charhtml: '<></>',
+      initNum: 0
     });
   }
 
   componentDidMount = () => {
-    
+    let get = {
+      getData: true,
+      username: this.props.username
+    }
+    axios.post('http://localhost:9000/', get)
+      .then(res => {
+        console.log(res.data)
+        if(res.data['times']) {
+          console.log('recorded username')
+          this.setState({ times: res.data['times'], initNum: res.data['times'].length })
+          this.charstats = res.data['unigram']
+          this.bicharstats = res.data['bigram']
+        } else {
+          console.log('new username')
+        }
+        
+      });
 
     fetch('/dictFreq.tsv')
     .then((r) => r.text())
@@ -101,8 +118,8 @@ export default class Test extends React.Component {
     this.setState({
       avg: mean.toFixed(2)
     });
-    
-    if(times.length == this.props.num) {
+    console.log(times.length - this.state.initNum)
+    if((times.length - this.state.initNum) == this.props.num) {
       this.setState({
         stats: true
       })
@@ -113,9 +130,11 @@ export default class Test extends React.Component {
 
 
   onKey = (e) => {
-    
+    console.log(this.state.times)
+    console.log(this.state.avg)
     console.log('in key')
-    if(e.keyCode != 8 && e.keyCode != 46) {
+    var t = this.state.text
+    if((e.keyCode != 8 && e.keyCode != 46) && (e.key == this.state.word[t.length])) {
       var time = new Date();
       var t1 = time.getTime();
       var times = this.state.times;
@@ -123,7 +142,7 @@ export default class Test extends React.Component {
         times.push([])
       } else {
         console.log(e.key);
-        var cs = this.charstats
+        var cs = this.charstats;
         var p = this.state.prev;
         var pc = this.state.prevChar;
         if(pc.length === 2) {
@@ -166,7 +185,7 @@ export default class Test extends React.Component {
       this.setState({
         prev: t1
       })
-      var t = this.state.text
+      
       
       var c = this.state.correct;
       if(e.key == this.state.word[t.length]) {
@@ -370,8 +389,7 @@ export default class Test extends React.Component {
           </>
           }
             <p>
-              Seconds per word: 
-              {this.state.avg}
+              Number of words typed total: {this.state.times.length}
             </p>
             <p>
               Words per minute:
@@ -388,6 +406,7 @@ export default class Test extends React.Component {
             <div style={{ margin: '50px'}}>
               <CanvasJSChart options = {this.options2} />
             </div>
+            
             </>
             }
           
